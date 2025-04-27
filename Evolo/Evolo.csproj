@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Drawie\src\DrawiEngine\DrawiEngine.csproj"/>
+        <ProjectReference Include="..\Evolo.Simulation.Core\Evolo.Simulation.Core.csproj"/>
+        <ProjectReference Include="..\Evolo.Simulation.Engine\Evolo.Simulation.Engine.csproj"/>
+    </ItemGroup>
+
+</Project>
