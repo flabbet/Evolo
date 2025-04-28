@@ -6,4 +6,9 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\Drawie\src\Drawie.Numerics\Drawie.Numerics.csproj" />
+      <ProjectReference Include="..\Evolo.Physics\Evolo.Physics.csproj" />
+    </ItemGroup>
+
 </Project>

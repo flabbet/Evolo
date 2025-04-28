@@ -8,6 +8,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Drawie\src\DrawiEngine\DrawiEngine.csproj"/>
+        <ProjectReference Include="..\Evolo.Renderer\Evolo.Renderer.csproj" />
         <ProjectReference Include="..\Evolo.Simulation.Core\Evolo.Simulation.Core.csproj"/>
         <ProjectReference Include="..\Evolo.Simulation.Engine\Evolo.Simulation.Engine.csproj"/>
     </ItemGroup>

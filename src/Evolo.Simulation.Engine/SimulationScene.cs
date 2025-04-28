@@ -1,10 +1,17 @@
 ﻿using System.Diagnostics;
+using Evolo.Physics;
 
 namespace Evolo.Simulation.Engine;
 
 public class SimulationScene
 {
-    public List<ISimulableEntity> SimulableEntities { get; private set; } = new List<ISimulableEntity>();
+    public IReadOnlyList<ISimulableEntity> SimulableEntities { get; } = new List<ISimulableEntity>();
+    public PhysicsScene PhysicsScene { get; private set; } = new PhysicsScene();
+    public double LastTps { get; private set; }
+
+    public double PhysicsTimeStep { get; set; } = 16; // ms
+    public double PhysicsTimeStepInSeconds => PhysicsTimeStep / 1000d;
+
     private bool isRunning;
     private Task simulationTask;
 
@@ -12,7 +19,7 @@ public class SimulationScene
 
     public void Run()
     {
-        if(simulationTask is { IsCompleted: false })
+        if (simulationTask is { IsCompleted: false })
         {
             return;
         }
@@ -26,21 +33,44 @@ public class SimulationScene
         isRunning = false;
     }
 
+    public void AddEntity(ISimulableEntity entity)
+    {
+        if (entity is IPhysicsBody physicsBody)
+        {
+            PhysicsScene.AddBody(physicsBody);
+        }
+
+        ((List<ISimulableEntity>)SimulableEntities).Add(entity);
+    }
+
     private void Simulate()
     {
+        double accumulatedTime = 0;
+
         while (isRunning)
         {
+            stopwatch.Restart();
+            SimulatePhysics(ref accumulatedTime);
             SimulateStep();
+            accumulatedTime += stopwatch.Elapsed.TotalMilliseconds;
+            LastTps = stopwatch.Elapsed.TotalMilliseconds;
         }
     }
 
     private void SimulateStep()
     {
-        stopwatch.Restart();
         foreach (var entity in SimulableEntities)
         {
             entity.Simulate();
         }
-        Console.WriteLine($"Simulated in: {stopwatch.ElapsedMilliseconds} ms");
+    }
+
+    private void SimulatePhysics(ref double accumulatedTime)
+    {
+        while (accumulatedTime >= PhysicsTimeStep)
+        {
+            PhysicsScene.Simulate(PhysicsTimeStepInSeconds);
+            accumulatedTime -= PhysicsTimeStep;
+        }
     }
 }
