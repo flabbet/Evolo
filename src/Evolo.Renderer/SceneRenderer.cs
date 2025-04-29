@@ -53,7 +53,7 @@ public class SceneRenderer
 
     private void RenderCell(ISimulableEntity cell, Texture texture)
     {
-        var position = cell.Position;
+        var position = new VecD(cell.Position.X, -cell.Position.Y);
 
         position += texture.Size / 2;
 

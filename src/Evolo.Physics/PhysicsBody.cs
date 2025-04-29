@@ -6,6 +6,7 @@ namespace Evolo.Physics;
 
 public interface IPhysicsBody
 {
+    public VecD Position { get; set; }
     public Matrix3x3 TrsMatrix { get; set; }
     public VecD Force { get; set; }
     public VecD LinearVelocity { get; set; }

@@ -8,7 +8,11 @@ namespace Evolo.Simulation.Core;
 
 public class Cell : ICell, IPhysicsBody
 {
-    public VecD Position => new VecD(TrsMatrix.Translation.X, TrsMatrix.Translation.Y);
+    public VecD Position
+    {
+        get => new VecD(TrsMatrix.Translation.X, TrsMatrix.Translation.Y);
+        set => TrsMatrix = Matrix3x3.CreateTranslation(new VecD((float)value.X, (float)value.Y));
+    }
     public Matrix3x3 TrsMatrix { get; set; } = Matrix3x3.Identity;
     public VecD LinearVelocity { get; set; }
     public VecD Force { get; set; }

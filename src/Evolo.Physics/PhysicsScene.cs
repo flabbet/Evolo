@@ -8,7 +8,7 @@ namespace Evolo.Physics;
 public class PhysicsScene
 {
     public const double PixelsPerMeter = 100;
-    public VecD Gravity { get; set; } = new VecD(0, 9.807);
+    public VecD Gravity { get; set; } = new VecD(0, -9.807);
 
     public List<IPhysicsBody> PhysicsBodies = new List<IPhysicsBody>();
     public void Simulate(double fixedStep)
@@ -21,6 +21,11 @@ public class PhysicsScene
             VecD positionChange = body.LinearVelocity * fixedStep;
 
             body.TrsMatrix *= Matrix3x3.CreateTranslation(positionChange);
+
+            if (body.Position.Y < -355)
+            {
+                body.Position = new VecD(body.Position.X, -355);
+            }
 
             body.Force = VecD.Zero;
         }
