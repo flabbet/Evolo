@@ -10,7 +10,7 @@ public class Cell : ICell, IPhysicsBody
 {
     public VecD Position => new VecD(TrsMatrix.Translation.X, TrsMatrix.Translation.Y);
     public Matrix3x3 TrsMatrix { get; set; } = Matrix3x3.Identity;
-    public VecD Velocity { get; set; }
+    public VecD LinearVelocity { get; set; }
     public VecD Force { get; set; }
     public double Mass { get; set; } = 1;
     public ICollider Collider { get; }

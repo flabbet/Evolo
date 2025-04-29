@@ -7,6 +7,7 @@ namespace Evolo.Physics;
 
 public class PhysicsScene
 {
+    public const double PixelsPerMeter = 100;
     public VecD Gravity { get; set; } = new VecD(0, 9.807);
 
     public List<IPhysicsBody> PhysicsBodies = new List<IPhysicsBody>();
@@ -14,10 +15,10 @@ public class PhysicsScene
     {
         foreach (var body in PhysicsBodies)
         {
-            var acceleration = body.Force * (1f / body.Mass) + Gravity;
+            var acceleration = (body.Force * (1f / body.Mass) + Gravity) * PixelsPerMeter;
 
-            body.Velocity += acceleration * fixedStep;
-            VecD positionChange = body.Velocity * fixedStep;
+            body.LinearVelocity += acceleration * fixedStep;
+            VecD positionChange = body.LinearVelocity * fixedStep;
 
             body.TrsMatrix *= Matrix3x3.CreateTranslation(positionChange);
 

@@ -39,9 +39,9 @@ public class SceneRenderer
         DrawDebugText(renderTexture, deltaTime);
 
         int savedWidth = renderTexture.DrawingSurface.Canvas.Save();
-        renderTexture.DrawingSurface.Canvas.Translate(ViewportPosition);
         renderTexture.DrawingSurface.Canvas.Scale((float)ViewportScale, (float)ViewportScale,
-            (float)(renderTexture.Size.X / 2d), (float)(renderTexture.Size.Y / 2d));
+            renderTexture.Size.X / 2f, renderTexture.Size.Y / 2f);
+        renderTexture.DrawingSurface.Canvas.Translate(ViewportPosition);
 
         foreach (var cell in Scene.SimulableEntities)
         {
