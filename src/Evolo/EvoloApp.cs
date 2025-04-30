@@ -1,4 +1,9 @@
 ﻿using Drawie.Backend.Core;
+using Drawie.Backend.Core.ColorsImpl;
+using Drawie.Backend.Core.ColorsImpl.Paintables;
+using Drawie.Backend.Core.Surfaces;
+using Drawie.Backend.Core.Surfaces.PaintImpl;
+using Drawie.Backend.Core.Text;
 using Drawie.Numerics;
 using Drawie.Windowing;
 using Drawie.Windowing.Input;
@@ -27,50 +32,66 @@ public class EvoloApp : DrawieApp
         Cell cell = new Cell();
         scene.AddEntity(cell);
 
-        sceneRenderer = new SceneRenderer(scene);
+        sceneRenderer = new SceneRenderer(scene)
+        {
+            ViewportPosition = window.Size / 2f
+        };
+
+        sceneRenderer.DebugDraw += SceneRendererOnDebugDraw;
         window.Render += WindowOnRender;
         window.Update += WindowOnUpdate;
+
+        if (window.InputController.PrimaryPointer != null)
+        {
+            window.InputController.PrimaryPointer.PointerPressed += PrimaryPointerOnPointerClicked;
+        }
 
         scene.Run();
     }
 
     private void WindowOnUpdate(double deltaTime)
     {
+        sceneRenderer.Scene.TickSimulation(deltaTime);
+
         const double speed = 100;
-        if (window.InputController.DefaultKeyboard == null)
+        if (window.InputController.PrimaryKeyboard == null)
         {
             return;
         }
 
         VecD pan = new VecD(0, 0);
-        if (window.InputController.DefaultKeyboard.IsKeyPressed(Key.W))
+        if (window.InputController.PrimaryKeyboard.IsKeyPressed(Key.W))
         {
             pan += new VecD(0, 1);
         }
-        if (window.InputController.DefaultKeyboard.IsKeyPressed(Key.S))
+
+        if (window.InputController.PrimaryKeyboard.IsKeyPressed(Key.S))
         {
             pan += new VecD(0, -1);
         }
-        if (window.InputController.DefaultKeyboard.IsKeyPressed(Key.A))
+
+        if (window.InputController.PrimaryKeyboard.IsKeyPressed(Key.A))
         {
             pan += new VecD(1, 0);
         }
-        if (window.InputController.DefaultKeyboard.IsKeyPressed(Key.D))
+
+        if (window.InputController.PrimaryKeyboard.IsKeyPressed(Key.D))
         {
             pan += new VecD(-1, 0);
         }
 
 
         double scale = 0;
-        if (window.InputController.DefaultKeyboard.IsKeyPressed(Key.Q))
+        if (window.InputController.PrimaryKeyboard.IsKeyPressed(Key.Q))
         {
             scale += 0.1;
         }
 
-        if (window.InputController.DefaultKeyboard.IsKeyPressed(Key.E))
+        if (window.InputController.PrimaryKeyboard.IsKeyPressed(Key.E))
         {
             scale += -0.1;
         }
+
 
         sceneRenderer.ViewportScale += scale * speed * deltaTime;
 
@@ -78,8 +99,40 @@ public class EvoloApp : DrawieApp
         sceneRenderer.ViewportPosition += pan * panSpeed * deltaTime;
     }
 
+    private void SceneRendererOnDebugDraw(Canvas canvas)
+    {
+        string pointerPosition = $"Pointer Position: {window.InputController.PrimaryPointer.Position}";
+        var worldPosition = ViewportToWorld(window.InputController.PrimaryPointer.Position);
+        string worldPointerPosition = $"World Pointer Position: x: {worldPosition.X:F2} y: {worldPosition.Y:F2}";
+
+        RichText debugText = new RichText(pointerPosition + "\n" + worldPointerPosition);
+        var font = Font.CreateDefault();
+        font.Size = 16;
+
+        debugText.Fill = true;
+        debugText.FillPaintable = new ColorPaintable(Colors.White);
+        using var paint = new Paint();
+        debugText.Paint(canvas, new VecD(0, 0), font, paint, null);
+    }
+
+    private void PrimaryPointerOnPointerClicked(IPointer pointer, PointerButton button, VecD position)
+    {
+        if (button == PointerButton.Left)
+        {
+            var cell = new Cell();
+            cell.Position = ViewportToWorld(position);
+            sceneRenderer.Scene.AddEntity(cell);
+        }
+    }
+
     private void WindowOnRender(Texture renderTexture, double deltaTime)
     {
         sceneRenderer.Render(renderTexture, deltaTime);
+    }
+
+    private VecD ViewportToWorld(VecD position)
+    {
+        double metersPerPixel = 1 / SimulationScene.PixelsPerMeter;
+        return (new VecD(position.X, -position.Y) - new VecD(sceneRenderer.ViewportPosition.X, - sceneRenderer.ViewportPosition.Y)) * metersPerPixel;
     }
 }

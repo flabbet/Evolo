@@ -1,6 +1,7 @@
 ﻿using Drawie.Backend.Core;
 using Drawie.Backend.Core.ColorsImpl;
 using Drawie.Backend.Core.ColorsImpl.Paintables;
+using Drawie.Backend.Core.Surfaces;
 using Drawie.Backend.Core.Surfaces.PaintImpl;
 using Drawie.Backend.Core.Text;
 using Drawie.Numerics;
@@ -10,14 +11,17 @@ namespace Evolo.Renderer;
 
 public class SceneRenderer
 {
-    private double scale = 1.0;
     public SimulationScene Scene { get; set; }
     public VecD ViewportPosition { get; set; }
+    public event Action<Canvas>? DebugDraw;
 
     private Font debugFont;
+    private double scale = 1.0;
 
     private double debugTextUpdateRate = 0;
     private string debugText = "";
+
+
 
     public double ViewportScale
     {
@@ -48,14 +52,14 @@ public class SceneRenderer
             RenderCell(cell, renderTexture);
         }
 
+        DrawInSceneDebugText(renderTexture, deltaTime);
+
         renderTexture.DrawingSurface.Canvas.RestoreToCount(savedWidth);
     }
 
     private void RenderCell(ISimulableEntity cell, Texture texture)
     {
-        var position = new VecD(cell.Position.X, -cell.Position.Y);
-
-        position += texture.Size / 2;
+        var position = ToViewportPosition(cell.Position);
 
         const double size = 10;
 
@@ -89,16 +93,53 @@ public class SceneRenderer
 
         using Paint paint = new Paint();
 
+        double y = debugFont.Size;
+
         RichText richText = new RichText(debugText);
         richText.FillPaintable = new ColorPaintable(Colors.White);
         richText.Fill = true;
-        richText.Paint(renderTexture.DrawingSurface.Canvas, new VecD(0, debugFont.Size), debugFont, paint, null);
+        richText.Paint(renderTexture.DrawingSurface.Canvas, new VecD(0, y), debugFont, paint, null);
 
         string viewportPos = $"Viewport: {ViewportPosition.X:F2}, {ViewportPosition.Y:F2}";
         string viewportScale = $"Scale: {ViewportScale:F2}";
         RichText richText2 = new RichText(viewportPos + "\n" + viewportScale);
         richText2.FillPaintable = new ColorPaintable(Colors.White);
         richText2.Fill = true;
-        richText2.Paint(renderTexture.DrawingSurface.Canvas, new VecD(0, richText.MeasureBounds(debugFont).Height + debugFont.Size), debugFont, paint, null);
+
+        y += richText.MeasureBounds(debugFont).Height + debugFont.Size + 5;
+
+        richText2.Paint(renderTexture.DrawingSurface.Canvas,
+            new VecD(0, y), debugFont, paint, null);
+
+        y += richText2.MeasureBounds(debugFont).Height + debugFont.Size + 5;
+        VecD pos = new VecD(0, y);
+
+        int savedWidth = renderTexture.DrawingSurface.Canvas.Save();
+        renderTexture.DrawingSurface.Canvas.Translate(new VecD(0, pos.Y));
+        DebugDraw?.Invoke(renderTexture.DrawingSurface.Canvas);
+        renderTexture.DrawingSurface.Canvas.RestoreToCount(savedWidth);
+    }
+
+    private void DrawInSceneDebugText(Texture renderTexture, double deltaTime)
+    {
+        using Paint paint = new Paint();
+        foreach (var entity in Scene.SimulableEntities)
+        {
+            string entityText = $"X: {entity.Position.X:F2}, Y: {entity.Position.Y:F2}";
+            RichText richText3 = new RichText(entityText)
+            {
+                FillPaintable = new ColorPaintable(Colors.White),
+                Fill = true
+            };
+
+            VecD pos = new VecD(entity.Position.X, entity.Position.Y);
+
+            richText3.Paint(renderTexture.DrawingSurface.Canvas, ToViewportPosition(pos) + new VecD(-richText3.MeasureBounds(debugFont).Width / 2f, -10), debugFont, paint, null);
+        }
+    }
+
+    public VecD ToViewportPosition(VecD position)
+    {
+        return new VecD(position.X, -position.Y) * SimulationScene.PixelsPerMeter;
     }
 }

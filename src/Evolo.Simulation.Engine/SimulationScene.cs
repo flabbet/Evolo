@@ -5,27 +5,24 @@ namespace Evolo.Simulation.Engine;
 
 public class SimulationScene
 {
-    public IReadOnlyList<ISimulableEntity> SimulableEntities { get; } = new List<ISimulableEntity>();
+    public const double PixelsPerMeter = 10;
+    public IReadOnlyList<ISimulableEntity> SimulableEntities => entities;
     public PhysicsScene PhysicsScene { get; private set; } = new PhysicsScene();
     public double LastTps { get; private set; }
 
     public double PhysicsTimeStep { get; set; } = 16; // ms
     public double PhysicsTimeStepInSeconds => PhysicsTimeStep / 1000d;
 
+    private List<ISimulableEntity> entities = new List<ISimulableEntity>();
     private bool isRunning;
-    private Task simulationTask;
 
-    private Stopwatch stopwatch = new Stopwatch();
+    private double accumulatedTime = 0;
+
+    private Queue<ISimulableEntity> entitiesToAdd = new Queue<ISimulableEntity>();
 
     public void Run()
     {
-        if (simulationTask is { IsCompleted: false })
-        {
-            return;
-        }
-
         isRunning = true;
-        simulationTask = Task.Run(Simulate);
     }
 
     public void Stop()
@@ -35,26 +32,32 @@ public class SimulationScene
 
     public void AddEntity(ISimulableEntity entity)
     {
+        if (isRunning)
+        {
+            entitiesToAdd.Enqueue(entity);
+            return;
+        }
+
+        AddEntityInternal(entity);
+    }
+
+    private void AddEntityInternal(ISimulableEntity entity)
+    {
         if (entity is IPhysicsBody physicsBody)
         {
             PhysicsScene.AddBody(physicsBody);
         }
 
-        ((List<ISimulableEntity>)SimulableEntities).Add(entity);
+        entities.Add(entity);
     }
 
-    private void Simulate()
+    public void TickSimulation(double deltaTime)
     {
-        double accumulatedTime = 0;
-
-        while (isRunning)
-        {
-            stopwatch.Restart();
-            SimulatePhysics(ref accumulatedTime);
-            SimulateStep();
-            accumulatedTime += stopwatch.Elapsed.TotalMilliseconds;
-            LastTps = stopwatch.Elapsed.TotalMilliseconds;
-        }
+        double ms = deltaTime * 1000;
+        SimulatePhysics(ref accumulatedTime);
+        SimulateStep();
+        accumulatedTime += ms;
+        LastTps = ms;
     }
 
     private void SimulateStep()
@@ -62,6 +65,12 @@ public class SimulationScene
         foreach (var entity in SimulableEntities)
         {
             entity.Simulate();
+        }
+
+        while (entitiesToAdd.Count > 0)
+        {
+            var entity = entitiesToAdd.Dequeue();
+            AddEntityInternal(entity);
         }
     }
 
