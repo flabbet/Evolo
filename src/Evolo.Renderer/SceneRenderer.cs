@@ -4,7 +4,9 @@ using Drawie.Backend.Core.ColorsImpl.Paintables;
 using Drawie.Backend.Core.Surfaces;
 using Drawie.Backend.Core.Surfaces.PaintImpl;
 using Drawie.Backend.Core.Text;
+using Drawie.Backend.Core.Vector;
 using Drawie.Numerics;
+using Evolo.Physics;
 using Evolo.Simulation.Engine;
 
 namespace Evolo.Renderer;
@@ -47,34 +49,37 @@ public class SceneRenderer
             renderTexture.Size.X / 2f, renderTexture.Size.Y / 2f);
         renderTexture.DrawingSurface.Canvas.Translate(ViewportPosition);
 
-        foreach (var cell in Scene.SimulableEntities)
+        RenderContext renderContext = new RenderContext(renderTexture);
+
+        foreach (var entity in Scene.SimulableEntities)
         {
-            RenderCell(cell, renderTexture);
+            if (entity is IRenderable renderable)
+            {
+                renderable.Render(renderContext);
+            }
+
+            if (entity is IPhysicsBody physicsBody)
+            {
+                RenderPathCollider(renderContext, physicsBody);
+            }
         }
 
-        DrawInSceneDebugText(renderTexture, deltaTime);
+        DrawInSceneDebugText(renderContext);
 
         renderTexture.DrawingSurface.Canvas.RestoreToCount(savedWidth);
     }
 
-    private void RenderCell(ISimulableEntity cell, Texture texture)
+    private void RenderPathCollider(RenderContext renderContext, IPhysicsBody physicsBody)
     {
-        var position = ToViewportPosition(cell.Position);
+        using var paint = new Paint();
+        paint.Color = Colors.LightGreen;
+        paint.Style = PaintStyle.Stroke;
+        paint.StrokeWidth = 2;
 
-        const double size = 10;
+        using var path = physicsBody.Collider.WorldPath;
+        path.Offset(new VecD(0, -physicsBody.Collider.AABB.Center.Y * 2));
 
-        var color = Colors.White;
-        var radius = size / 2;
-        var center = new VecD(position.X, position.Y);
-
-        using Paint paint = new Paint()
-        {
-            Color = color,
-            Style = PaintStyle.Fill,
-            IsAntiAliased = true
-        };
-
-        texture.DrawingSurface.Canvas.DrawCircle(center, (float)radius, paint);
+        renderContext.DrawPath(path, paint);
     }
 
     private void DrawDebugText(Texture renderTexture, double deltaTime)
@@ -120,7 +125,7 @@ public class SceneRenderer
         renderTexture.DrawingSurface.Canvas.RestoreToCount(savedWidth);
     }
 
-    private void DrawInSceneDebugText(Texture renderTexture, double deltaTime)
+    private void DrawInSceneDebugText(RenderContext renderContext)
     {
         using Paint paint = new Paint();
         foreach (var entity in Scene.SimulableEntities)
@@ -134,12 +139,7 @@ public class SceneRenderer
 
             VecD pos = new VecD(entity.Position.X, entity.Position.Y);
 
-            richText3.Paint(renderTexture.DrawingSurface.Canvas, ToViewportPosition(pos) + new VecD(-richText3.MeasureBounds(debugFont).Width / 2f, -10), debugFont, paint, null);
+            //richText3.Paint(renderContext.DrawingSurface.Canvas, ToViewportPosition(pos) + new VecD(-richText3.MeasureBounds(debugFont).Width / 2f, -10), debugFont, paint, null);
         }
-    }
-
-    public VecD ToViewportPosition(VecD position)
-    {
-        return new VecD(position.X, -position.Y) * SimulationScene.PixelsPerMeter;
     }
 }

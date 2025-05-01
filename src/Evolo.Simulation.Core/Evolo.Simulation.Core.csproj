@@ -7,6 +7,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\Evolo.Renderer\Evolo.Renderer.csproj" />
       <ProjectReference Include="..\Evolo.Simulation.Engine\Evolo.Simulation.Engine.csproj" />
     </ItemGroup>
 

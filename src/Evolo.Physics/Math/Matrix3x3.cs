@@ -80,6 +80,13 @@ public struct Matrix3x3
         );
     }
 
+    public static Matrix3x3 TRS(VecD translation, VecD scale, double rotation)
+    {
+        return CreateTranslation(translation.X, translation.Y) *
+               CreateScale(scale.X, scale.Y) *
+               CreateRotation(rotation);
+    }
+
     public static Matrix3x3 CreateTranslation(double x, double y)
     {
         return new Matrix3x3(

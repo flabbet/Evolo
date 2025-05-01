@@ -1,41 +1,38 @@
-using System.Numerics;
 using Drawie.Backend.Core.ColorsImpl;
-using Drawie.Backend.Core.Numerics;
 using Drawie.Backend.Core.Surfaces;
 using Drawie.Backend.Core.Surfaces.PaintImpl;
 using Drawie.Numerics;
-using Evolo.Physics;
 using Evolo.Physics.Colliders;
-using Evolo.Physics.Math;
 using Evolo.Renderer;
+using Evolo.Simulation.Engine;
 
 namespace Evolo.Simulation.Core;
 
-public class Cell : PhysicsObject, ICell, IRenderable
+public class Wall : PhysicsObject, ISimulableEntity, IRenderable
 {
-
-
-    public PhysicalProperties PhysicalProperties { get; }
-    public ChemicalProperties ChemicalProperties { get; }
-
-    public Cell()
+    public Wall(VecD position, VecD size)
     {
-        Collider = new CircleCollider(new VecD(0, 0), 1, this);
+        IsStatic = true;
+        Position = position;
+        Scale = size;
+
+        Collider = new RectangleCollider(new VecD(0, 0), new VecD(1, 1), this);
     }
 
     public void Simulate()
     {
+
     }
 
     public void Render(RenderContext context)
     {
         using var paint = new Paint()
         {
-            Color = Colors.White,
+            Color = Colors.Gray,
             Style = PaintStyle.Fill,
             IsAntiAliased = true
         };
 
-        context.DrawCircle(Position, 1, paint);
+        context.DrawRect(new RectD(Position, Scale), paint);
     }
 }

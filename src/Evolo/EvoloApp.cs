@@ -29,8 +29,8 @@ public class EvoloApp : DrawieApp
     {
         SimulationScene scene = new SimulationScene();
 
-        Cell cell = new Cell();
-        scene.AddEntity(cell);
+        Wall floor = new Wall(new VecD(-50, -30), new VecD(100, 5));
+        scene.AddEntity(floor);
 
         sceneRenderer = new SceneRenderer(scene)
         {

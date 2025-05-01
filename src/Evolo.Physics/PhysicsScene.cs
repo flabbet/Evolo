@@ -10,10 +10,18 @@ public class PhysicsScene
     public VecD Gravity { get; set; } = new VecD(0, -9.807);
 
     public List<IPhysicsBody> PhysicsBodies = new List<IPhysicsBody>();
+
     public void Simulate(double fixedStep)
     {
         foreach (var body in PhysicsBodies)
         {
+            if (body.IsStatic)
+            {
+                body.LinearVelocity = VecD.Zero;
+                continue;
+            }
+
+
             var acceleration = (body.Force * (1f / body.Mass) + Gravity);
 
             body.LinearVelocity += acceleration * fixedStep;
@@ -21,17 +29,67 @@ public class PhysicsScene
 
             body.TrsMatrix *= Matrix3x3.CreateTranslation(positionChange);
 
-            if (body.Position.Y < -35)
-            {
-                body.Position = new VecD(body.Position.X, -35);
-            }
-
             body.Force = VecD.Zero;
+
+            CheckCollisions(body);
         }
     }
 
     public void AddBody(IPhysicsBody physicsBody)
     {
         PhysicsBodies.Add(physicsBody);
+    }
+
+    private void CheckCollisions(IPhysicsBody body)
+    {
+        foreach (var otherBody in PhysicsBodies)
+        {
+            if (body == otherBody) continue;
+            if (body.Collider == null || otherBody.Collider == null) continue;
+
+            if (body.Collider.IsColliding(otherBody.Collider, out VecD normal, out double penetration))
+            {
+                // Handle collision response
+                ResolveImpulse(body, otherBody, normal);
+                CorrectPosition(body, otherBody, normal, penetration);
+            }
+        }
+    }
+
+    private static void ResolveImpulse(IPhysicsBody body, IPhysicsBody otherBody, VecD normal)
+    {
+        double relativeVelocity = (otherBody.LinearVelocity - body.LinearVelocity) * normal;
+
+        if (relativeVelocity < 0)
+        {
+            double invMass1 = 1 / body.Mass;
+            double invMass2 = otherBody.IsStatic ? 0 : 1 / otherBody.Mass;
+
+            var scalar = -(1 + body.Bounciness) * relativeVelocity / (invMass1 + invMass2);
+            var impulse = scalar * normal;
+
+            body.LinearVelocity -= impulse / body.Mass;
+            if (!otherBody.IsStatic)
+            {
+                otherBody.LinearVelocity += impulse / otherBody.Mass;
+            }
+        }
+    }
+
+    private static void CorrectPosition(IPhysicsBody bodyA, IPhysicsBody bodyB, VecD normal, double penetration)
+    {
+        double invMassA = bodyA.IsStatic ? 0 : 1 / bodyA.Mass;
+        double invMassB = bodyB.IsStatic ? 0 : 1 / bodyB.Mass;
+
+        const double percent = 0.8;
+        const double slop = 0.01;
+
+        double correctionMag = System.Math.Max(penetration - slop, 0) / (invMassA + invMassB) * percent;
+        VecD correction = correctionMag * normal;
+
+        if (!bodyA.IsStatic)
+            bodyA.Position -= correction * invMassA;
+        if (!bodyB.IsStatic)
+            bodyB.Position += correction * invMassB;
     }
 }
