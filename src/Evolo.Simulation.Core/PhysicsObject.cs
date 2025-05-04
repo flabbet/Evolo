@@ -6,6 +6,7 @@ namespace Evolo.Simulation.Core;
 
 public class PhysicsObject : IPhysicsBody
 {
+    private ICollider? collider;
     public bool IsStatic { get; set; } = false;
 
     public VecD Position
@@ -25,5 +26,14 @@ public class PhysicsObject : IPhysicsBody
     public VecD Force { get; set; }
     public double Mass { get; set; } = 1;
     public double Bounciness { get; set; } = 0.5;
-    public ICollider? Collider { get; set; }
+
+    public ICollider? Collider
+    {
+        get => collider;
+        set
+        {
+            collider = value;
+            collider?.Attach(this);
+        }
+    }
 }

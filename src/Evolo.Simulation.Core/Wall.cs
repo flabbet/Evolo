@@ -16,7 +16,7 @@ public class Wall : PhysicsObject, ISimulableEntity, IRenderable
         Position = position;
         Scale = size;
 
-        Collider = new RectangleCollider(new VecD(0, 0), new VecD(1, 1), this);
+        Collider = new RectangleCollider(new VecD(0, 0), new VecD(1, 1));
     }
 
     public void Simulate()

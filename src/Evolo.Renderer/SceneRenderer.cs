@@ -80,6 +80,8 @@ public class SceneRenderer
         path.Offset(new VecD(0, -physicsBody.Collider.AABB.Center.Y * 2));
 
         renderContext.DrawPath(path, paint);
+        paint.Color = Colors.Red;
+        renderContext.DrawCircle(physicsBody.Position, 0.2, paint);
     }
 
     private void DrawDebugText(Texture renderTexture, double deltaTime)

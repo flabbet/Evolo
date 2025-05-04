@@ -4,10 +4,12 @@ using Drawie.Backend.Core.ColorsImpl.Paintables;
 using Drawie.Backend.Core.Surfaces;
 using Drawie.Backend.Core.Surfaces.PaintImpl;
 using Drawie.Backend.Core.Text;
+using Drawie.Backend.Core.Vector;
 using Drawie.Numerics;
 using Drawie.Windowing;
 using Drawie.Windowing.Input;
 using DrawiEngine;
+using Evolo.Physics.Colliders;
 using Evolo.Renderer;
 using Evolo.Simulation.Core;
 using Evolo.Simulation.Engine;
@@ -32,10 +34,20 @@ public class EvoloApp : DrawieApp
         Wall floor = new Wall(new VecD(-50, -30), new VecD(100, 5));
         scene.AddEntity(floor);
 
+        List<ConvexCollider> colliders = new List<ConvexCollider>();
+
+        colliders.Add(new CircleCollider(new VecD(0, -0.5), 1));
+        colliders.Add(new RectangleCollider(VecD.Zero, new VecD(2, 1), 45));
+
+        PolyObject polyObject = new PolyObject(colliders);
+
+
         sceneRenderer = new SceneRenderer(scene)
         {
             ViewportPosition = window.Size / 2f
         };
+
+        scene.AddEntity(polyObject);
 
         sceneRenderer.DebugDraw += SceneRendererOnDebugDraw;
         window.Render += WindowOnRender;

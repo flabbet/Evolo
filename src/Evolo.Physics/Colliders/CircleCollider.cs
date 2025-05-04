@@ -3,7 +3,7 @@ using Drawie.Numerics;
 
 namespace Evolo.Physics.Colliders;
 
-public class CircleCollider : Collider<CircleCollider>
+public class CircleCollider : ConvexCollider
 {
     public VecD LocalCenter { get; }
     public VecD WorldCenter => PhysicsBody.Position + LocalCenter;
@@ -11,7 +11,7 @@ public class CircleCollider : Collider<CircleCollider>
 
     public override VectorPath LocalPath { get; }
 
-    public CircleCollider(VecD localCenter, double radius, IPhysicsBody body) : base(body)
+    public CircleCollider(VecD localCenter, double radius)
     {
         LocalCenter = localCenter;
         Radius = radius;
@@ -27,16 +27,33 @@ public class CircleCollider : Collider<CircleCollider>
         LocalPath = path;
     }
 
-    protected override bool CollidesWith(CircleCollider other)
+    /*protected override bool CollidesWith(CircleCollider other)
     {
         double distance = VecD.Distance(WorldCenter, other.WorldCenter);
         return distance < Radius + other.Radius;
-    }
+    }*/
 
 
     public override bool Intersects(VecD point)
     {
         double distance = VecD.Distance(WorldCenter, point);
         return distance < Radius;
+    }
+
+    public override VecD GetClosestPointTo(VecD point)
+    {
+        VecD direction = point - WorldCenter;
+        double distance = direction.Length;
+
+        if (distance == 0)
+            return WorldCenter;
+
+        direction /= distance;
+        return WorldCenter + direction * Radius;
+    }
+
+    public override VecD GetCollisionCentroid(VecD intersectionCenter)
+    {
+        return WorldCenter;
     }
 }

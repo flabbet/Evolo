@@ -20,7 +20,7 @@ public class Cell : PhysicsObject, ICell, IRenderable
 
     public Cell()
     {
-        Collider = new CircleCollider(new VecD(0, 0), 1, this);
+        Collider = new CircleCollider(new VecD(0, 0), 1);
     }
 
     public void Simulate()

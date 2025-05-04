@@ -47,11 +47,14 @@ public class PhysicsScene
             if (body == otherBody) continue;
             if (body.Collider == null || otherBody.Collider == null) continue;
 
-            if (body.Collider.IsColliding(otherBody.Collider, out VecD normal, out double penetration))
+            CollisionData[] collisions;
+            if (body.Collider.IsColliding(otherBody.Collider, out collisions))
             {
-                // Handle collision response
-                ResolveImpulse(body, otherBody, normal);
-                CorrectPosition(body, otherBody, normal, penetration);
+                foreach (var collision in collisions)
+                {
+                    ResolveImpulse(body, otherBody, collision.Normal);
+                    CorrectPosition(body, otherBody, collision);
+                }
             }
         }
     }
@@ -76,7 +79,7 @@ public class PhysicsScene
         }
     }
 
-    private static void CorrectPosition(IPhysicsBody bodyA, IPhysicsBody bodyB, VecD normal, double penetration)
+    private static void CorrectPosition(IPhysicsBody bodyA, IPhysicsBody bodyB, CollisionData collision)
     {
         double invMassA = bodyA.IsStatic ? 0 : 1 / bodyA.Mass;
         double invMassB = bodyB.IsStatic ? 0 : 1 / bodyB.Mass;
@@ -84,8 +87,8 @@ public class PhysicsScene
         const double percent = 0.8;
         const double slop = 0.01;
 
-        double correctionMag = System.Math.Max(penetration - slop, 0) / (invMassA + invMassB) * percent;
-        VecD correction = correctionMag * normal;
+        double correctionMag = System.Math.Max(collision.PenetrationDepth - slop, 0) / (invMassA + invMassB) * percent;
+        VecD correction = correctionMag * collision.Normal;
 
         if (!bodyA.IsStatic)
             bodyA.Position -= correction * invMassA;
