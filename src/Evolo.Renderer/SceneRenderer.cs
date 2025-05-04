@@ -7,6 +7,7 @@ using Drawie.Backend.Core.Text;
 using Drawie.Backend.Core.Vector;
 using Drawie.Numerics;
 using Evolo.Physics;
+using Evolo.Physics.Colliders;
 using Evolo.Simulation.Engine;
 
 namespace Evolo.Renderer;
@@ -16,13 +17,13 @@ public class SceneRenderer
     public SimulationScene Scene { get; set; }
     public VecD ViewportPosition { get; set; }
     public event Action<Canvas>? DebugDraw;
+    public event Action<RenderContext>? DrawInSceneDebug;
 
     private Font debugFont;
     private double scale = 1.0;
 
     private double debugTextUpdateRate = 0;
     private string debugText = "";
-
 
 
     public double ViewportScale
@@ -36,6 +37,7 @@ public class SceneRenderer
         Scene = scene;
         debugFont = Font.CreateDefault();
         debugFont.Size = 16;
+
     }
 
     public void Render(Texture renderTexture, double deltaTime)
@@ -65,6 +67,7 @@ public class SceneRenderer
         }
 
         DrawInSceneDebugText(renderContext);
+        DrawInSceneDebug?.Invoke(renderContext);
 
         renderTexture.DrawingSurface.Canvas.RestoreToCount(savedWidth);
     }

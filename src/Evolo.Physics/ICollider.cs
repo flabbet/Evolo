@@ -12,5 +12,6 @@ public interface ICollider
     public bool Intersects(VecD point);
     public IPhysicsBody PhysicsBody { get; }
     public VecD GetCollisionCentroid(VecD intersectionCenter);
+    public VecD GetClosestPointTo(VecD point);
     public void Attach(IPhysicsBody physicsBody);
 }

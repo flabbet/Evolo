@@ -6,7 +6,7 @@ namespace Evolo.Physics.Colliders;
 public class CircleCollider : ConvexCollider
 {
     public VecD LocalCenter { get; }
-    public VecD WorldCenter => PhysicsBody.Position + LocalCenter;
+    public VecD WorldCenter => PhysicsBody?.Position ?? VecD.Zero + LocalCenter;
     public double Radius { get; }
 
     public override VectorPath LocalPath { get; }

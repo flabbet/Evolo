@@ -13,6 +13,7 @@ public class RectangleCollider : ConvexCollider
     public RectangleCollider(VecD position, VecD size, double rotation = 0)
     {
         Rectangle = new RectD(position, size);
+        RotationAngle = rotation;
         var path = new VectorPath();
         path.AddRect(Rectangle);
         if (rotation != 0)
@@ -30,19 +31,19 @@ public class RectangleCollider : ConvexCollider
 
     public override VecD GetClosestPointTo(VecD point)
     {
-        VecD closestPoint = point;
+        VecD unrotatedPoint = point.Rotate(double.DegreesToRadians(RotationAngle), Rectangle.Center);
 
-        if (point.X < Rectangle.Left)
-            closestPoint.X = Rectangle.Left;
-        else if (point.X > Rectangle.Right)
-            closestPoint.X = Rectangle.Right;
+        if (unrotatedPoint.X < Rectangle.Left)
+            unrotatedPoint.X = Rectangle.Left;
+        else if (unrotatedPoint.X > Rectangle.Right)
+            unrotatedPoint.X = Rectangle.Right;
 
-        if (point.Y < Rectangle.Top)
-            closestPoint.Y = Rectangle.Top;
-        else if (point.Y > Rectangle.Bottom)
-            closestPoint.Y = Rectangle.Bottom;
+        if (unrotatedPoint.Y < Rectangle.Top)
+            unrotatedPoint.Y = Rectangle.Top;
+        else if (unrotatedPoint.Y > Rectangle.Bottom)
+            unrotatedPoint.Y = Rectangle.Bottom;
 
-        return closestPoint;
+        return unrotatedPoint.Rotate(-double.DegreesToRadians(RotationAngle), Rectangle.Center);
     }
 
     public override VecD GetCollisionCentroid(VecD intersectionCenter)

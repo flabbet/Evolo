@@ -9,6 +9,7 @@ using Drawie.Numerics;
 using Drawie.Windowing;
 using Drawie.Windowing.Input;
 using DrawiEngine;
+using Evolo.Physics;
 using Evolo.Physics.Colliders;
 using Evolo.Renderer;
 using Evolo.Simulation.Core;
@@ -20,6 +21,7 @@ public class EvoloApp : DrawieApp
 {
     private IWindow window;
     private SceneRenderer sceneRenderer;
+    private ICollider testingCollider;
 
     public override IWindow CreateMainWindow()
     {
@@ -36,7 +38,7 @@ public class EvoloApp : DrawieApp
 
         List<ConvexCollider> colliders = new List<ConvexCollider>();
 
-        colliders.Add(new CircleCollider(new VecD(0, -0.5), 1));
+        colliders.Add(new CircleCollider(new VecD(0, 0), 1));
         colliders.Add(new RectangleCollider(VecD.Zero, new VecD(2, 1), 45));
 
         PolyObject polyObject = new PolyObject(colliders);
@@ -47,9 +49,12 @@ public class EvoloApp : DrawieApp
             ViewportPosition = window.Size / 2f
         };
 
+        testingCollider = new RectangleCollider(VecD.Zero, new VecD(5, 1), 45);
+
         scene.AddEntity(polyObject);
 
         sceneRenderer.DebugDraw += SceneRendererOnDebugDraw;
+        sceneRenderer.DrawInSceneDebug += SceneRendererOnDrawInSceneDebug;
         window.Render += WindowOnRender;
         window.Update += WindowOnUpdate;
 
@@ -59,6 +64,27 @@ public class EvoloApp : DrawieApp
         }
 
         scene.Run();
+    }
+
+    private void SceneRendererOnDrawInSceneDebug(RenderContext renderContext)
+    {
+        if (testingCollider != null)
+        {
+            using var paint2 = new Paint();
+            paint2.Color = Colors.Red;
+            paint2.Style = PaintStyle.Stroke;
+            paint2.StrokeWidth = 2;
+
+            VectorPath path = new VectorPath(testingCollider.WorldPath);
+            path.Offset(new VecD(0, -testingCollider.AABB.Center.Y * 2));
+            renderContext.DrawPath(path, paint2);
+
+            VecD closestPoint = testingCollider.GetClosestPointTo(ViewportToWorld(window.InputController.PrimaryPointer.Position));
+            paint2.Color = Colors.Blue;
+            paint2.Style = PaintStyle.Fill;
+
+            renderContext.DrawCircle(closestPoint, 0.2, paint2);
+        }
     }
 
     private void WindowOnUpdate(double deltaTime)
@@ -145,6 +171,10 @@ public class EvoloApp : DrawieApp
     private VecD ViewportToWorld(VecD position)
     {
         double metersPerPixel = 1 / SimulationScene.PixelsPerMeter;
-        return (new VecD(position.X, -position.Y) - new VecD(sceneRenderer.ViewportPosition.X, - sceneRenderer.ViewportPosition.Y)) * metersPerPixel;
+        VecD yFixedPosition = new VecD(position.X, -position.Y);
+        VecD yFixedViewportPosition = new VecD(sceneRenderer.ViewportPosition.X, -sceneRenderer.ViewportPosition.Y);
+
+        var scaleAdjusted = metersPerPixel / sceneRenderer.ViewportScale;
+        return (yFixedPosition - yFixedViewportPosition) * scaleAdjusted;
     }
 }

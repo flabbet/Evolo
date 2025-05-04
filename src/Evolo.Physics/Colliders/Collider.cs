@@ -1,3 +1,4 @@
+using Drawie.Backend.Core.Numerics;
 using Drawie.Backend.Core.Vector;
 using Drawie.Numerics;
 
@@ -25,7 +26,7 @@ public abstract class Collider<T> : ICollider
         get
         {
             var path = new VectorPath();
-            path.AddPath(LocalPath, PhysicsBody.TrsMatrix.ToDrawieMatrix(), AddPathMode.Append);
+            path.AddPath(LocalPath, PhysicsBody?.TrsMatrix.ToDrawieMatrix() ?? Matrix3X3.Identity, AddPathMode.Append);
             return path;
         }
     }
