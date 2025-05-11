@@ -23,6 +23,8 @@ public class EvoloApp : DrawieApp
     private SceneRenderer sceneRenderer;
     private ICollider testingCollider;
 
+    public double TimeScale { get; set; } = 1;
+
     public override IWindow CreateMainWindow()
     {
         window = Engine.WindowingPlatform.CreateWindow("Evolo", new VecI(1280, 720));
@@ -38,11 +40,16 @@ public class EvoloApp : DrawieApp
 
         List<ConvexCollider> colliders = new List<ConvexCollider>();
 
-        colliders.Add(new CircleCollider(new VecD(0, 0), 1));
-        colliders.Add(new RectangleCollider(VecD.Zero, new VecD(2, 1), 45));
+        colliders.Add(new RectangleCollider(VecD.Zero, new VecD(3, 1), 0));
 
         PolyObject polyObject = new PolyObject(colliders);
 
+        var coliders2 = new List<ConvexCollider>();
+        coliders2.Add(new RectangleCollider(new VecD(0, 0), new VecD(1, 1), 0));
+
+        PolyObject polyObject2 = new PolyObject(coliders2);
+
+        polyObject2.Position = new VecD(0, -20);
 
         sceneRenderer = new SceneRenderer(scene)
         {
@@ -51,7 +58,8 @@ public class EvoloApp : DrawieApp
 
         testingCollider = new RectangleCollider(VecD.Zero, new VecD(5, 1), 45);
 
-        scene.AddEntity(polyObject);
+        //scene.AddEntity(polyObject);
+        //scene.AddEntity(polyObject2);
 
         sceneRenderer.DebugDraw += SceneRendererOnDebugDraw;
         sceneRenderer.DrawInSceneDebug += SceneRendererOnDrawInSceneDebug;
@@ -79,7 +87,8 @@ public class EvoloApp : DrawieApp
             path.Offset(new VecD(0, -testingCollider.AABB.Center.Y * 2));
             renderContext.DrawPath(path, paint2);
 
-            VecD closestPoint = testingCollider.GetClosestPointTo(ViewportToWorld(window.InputController.PrimaryPointer.Position));
+            VecD closestPoint =
+                testingCollider.GetClosestPointTo(ViewportToWorld(window.InputController.PrimaryPointer.Position));
             paint2.Color = Colors.Blue;
             paint2.Style = PaintStyle.Fill;
 
@@ -89,6 +98,7 @@ public class EvoloApp : DrawieApp
 
     private void WindowOnUpdate(double deltaTime)
     {
+        deltaTime *= TimeScale;
         sceneRenderer.Scene.TickSimulation(deltaTime);
 
         const double speed = 100;

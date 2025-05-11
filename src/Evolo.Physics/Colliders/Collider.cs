@@ -1,3 +1,4 @@
+using Drawie.Backend.Core.ColorsImpl;
 using Drawie.Backend.Core.Numerics;
 using Drawie.Backend.Core.Vector;
 using Drawie.Numerics;
@@ -72,11 +73,10 @@ public abstract class Collider<T> : ICollider
                 var intersectionCenter = intersection.Center;
 
                 var collisionCenter = GetCollisionCentroid(intersection.Center);
-                var normal = (intersectionCenter - collisionCenter).Normalize();
 
-                // find the penetration depth by getting contact point, mapping intersection onto a normal and adding size to it
+                var normal = GetSegmentNormal(subShape, intersectionCenter, collisionCenter, out VecD? contact);
+                VecD contactPoint = contact ?? intersectionCenter;
 
-                VecD contactPoint = GetClosestPointTo(intersectionCenter);
                 VecD? otherPoint = subShape.GetClosestPointOnPath(contactPoint + normal, float.PositiveInfinity);
                 double penetration = 0;
                 if (otherPoint.HasValue)
@@ -84,7 +84,7 @@ public abstract class Collider<T> : ICollider
                     penetration = VecD.Distance(contactPoint, otherPoint.Value);
                 }
 
-                CollisionData collisionData = new CollisionData(this, other, normal, penetration);
+                CollisionData collisionData = new CollisionData(this, other, contactPoint, normal, penetration, intersectedPath);
                 collisions[i] = collisionData;
             }
 
@@ -92,6 +92,17 @@ public abstract class Collider<T> : ICollider
         }
 
         return collides;
+    }
+
+    private VecD GetSegmentNormal(SubShape subShape, VecD from, VecD to, out VecD? contactPoint)
+    {
+        Verb? intersectingVerb = subShape.FindVerbIntersectingWith(from, to, out contactPoint, out VecD? normal);
+        if (intersectingVerb == null)
+        {
+            return VecD.Zero;
+        }
+
+        return normal!.Value;
     }
 
     //protected abstract bool CollidesWith(T other, out VecD normal, out double penetration);

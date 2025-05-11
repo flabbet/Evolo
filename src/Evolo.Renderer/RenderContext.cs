@@ -40,7 +40,9 @@ public class RenderContext
     {
         var canvas = targetTexture.DrawingSurface.Canvas;
 
-        Matrix3X3 scaleMatrix = Matrix3X3.CreateScale((float)SimulationScene.PixelsPerMeter, (float)SimulationScene.PixelsPerMeter);
+        Matrix3X3 scaleMatrix =
+            Matrix3X3.CreateTranslation(0, (float)-path.Bounds.Center.Y * 2)
+                .PostConcat(Matrix3X3.CreateScale((float)SimulationScene.PixelsPerMeter, (float)SimulationScene.PixelsPerMeter));
 
         using VectorPath scaledPath = new VectorPath();
         scaledPath.AddPath(path, scaleMatrix, AddPathMode.Append);
@@ -51,5 +53,15 @@ public class RenderContext
     public VecD WorldToViewport(VecD position)
     {
         return new VecD(position.X, -position.Y) * SimulationScene.PixelsPerMeter;
+    }
+
+    public void DrawLine(VecD from, VecD to, Paint paint)
+    {
+        var canvas = targetTexture.DrawingSurface.Canvas;
+
+        VecD start = WorldToViewport(from);
+        VecD end = WorldToViewport(to);
+
+        canvas.DrawLine(start, end, paint);
     }
 }

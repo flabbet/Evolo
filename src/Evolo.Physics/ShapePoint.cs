@@ -21,12 +21,12 @@ public class ShapePoint
 
     public void ConvertVerbToCubic()
     {
-        if(Verb.IsEmptyVerb()) return;
-        
+        if (Verb.IsEmptyVerb()) return;
+
         VecF[] points = ConvertVerbToCubicPoints();
         Verb = new Verb((PathVerb.Cubic, points, Verb.ConicWeight));
     }
-    
+
     private VecF[] ConvertVerbToCubicPoints()
     {
         if (Verb.VerbType == PathVerb.Line)
@@ -37,7 +37,7 @@ public class ShapePoint
         if (Verb.VerbType == PathVerb.Conic)
         {
             VecF mid1 = Verb.ControlPoint1 ?? Verb.From;
-            
+
             float fixedConic = 1 - Verb.ConicWeight;
 
             // TODO: Make sure it is adjusted/works for other cases
@@ -47,7 +47,7 @@ public class ShapePoint
 
             VecF from1 = (mid1 - Verb.From);
             from1 = new VecF(from1.X * factor, from1.Y * factor);
-            
+
             VecF from2 = (mid1 - Verb.To);
             from2 = new VecF(from2.X * factor, from2.Y * factor);
 
@@ -56,7 +56,7 @@ public class ShapePoint
 
             return [Verb.From, control1, control2, Verb.To];
         }
-        
+
         //TODO: Implement Quad to Cubic conversion
         return [Verb.From, Verb.ControlPoint1 ?? Verb.From, Verb.ControlPoint2 ?? Verb.To, Verb.To];
     }
@@ -77,7 +77,7 @@ public class Verb
     {
         VerbType = null;
     }
-    
+
     public Verb(PathVerb verb, VecF from, VecF to, VecF? controlPoint1, VecF? controlPoint2, float conicWeight)
     {
         VerbType = verb;
@@ -87,7 +87,7 @@ public class Verb
         ControlPoint2 = controlPoint2;
         ConicWeight = conicWeight;
     }
-    
+
     public Verb((PathVerb verb, VecF[] points, float conicWeight) verbData)
     {
         VerbType = verbData.verb;
@@ -97,12 +97,12 @@ public class Verb
         ControlPoint2 = GetControlPoint(verbData, false);
         ConicWeight = verbData.conicWeight;
     }
-    
+
     public bool IsEmptyVerb()
     {
         return VerbType == null;
     }
-    
+
     public static VecF GetPointFromVerb((PathVerb verb, VecF[] points, float conicWeight) data)
     {
         switch (data.verb)
@@ -125,7 +125,7 @@ public class Verb
                 throw new ArgumentOutOfRangeException();
         }
     }
-    
+
     public static VecF? GetControlPoint((PathVerb verb, VecF[] points, float conicWeight) data, bool first)
     {
         int index = first ? 1 : 2;
@@ -148,5 +148,35 @@ public class Verb
             default:
                 throw new ArgumentOutOfRangeException();
         }
+    }
+
+    public VecD? TryFindIntersection(VecD from, VecD to, out VecD? normal)
+    {
+        normal = null;
+        if (VerbType == PathVerb.Line)
+        {
+            var intersection = VectorMath.GetLineIntersection(from, to, (VecD)From, (VecD)To);
+            if (intersection.HasValue)
+            {
+                normal = VectorMath.GetLineNormal(From, To);
+                return intersection;
+            }
+        }
+
+        if (VerbType == PathVerb.Cubic)
+        {
+            var intersection = VectorMath.CubicLineIntersection((VecD)From, (VecD)To, (VecD)(ControlPoint1 ?? From),
+                (VecD)(ControlPoint2 ?? To), from, to);
+            if (intersection.HasValue)
+            {
+                double t = VectorMath.GetNormalizedSegmentPosition(this, (VecF)intersection.Value);
+                bool clockWise = VectorMath.IsClockWise(from, to, (VecD)From, (VecD)To);
+                normal = VectorMath.GetCubicNormal((VecD)From, (VecD)(ControlPoint1 ?? From),
+                    (VecD)(ControlPoint2 ?? To), (VecD)To, t, clockWise);
+                return intersection;
+            }
+        }
+
+        return null;
     }
 }

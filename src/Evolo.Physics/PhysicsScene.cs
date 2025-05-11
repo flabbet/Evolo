@@ -11,6 +11,9 @@ public class PhysicsScene
 
     public List<IPhysicsBody> PhysicsBodies = new List<IPhysicsBody>();
 
+
+    public static CollisionData[] lastCollisions;
+
     public void Simulate(double fixedStep)
     {
         foreach (var body in PhysicsBodies)
@@ -20,7 +23,6 @@ public class PhysicsScene
                 body.LinearVelocity = VecD.Zero;
                 continue;
             }
-
 
             var acceleration = (body.Force * (1f / body.Mass) + Gravity);
 
@@ -55,6 +57,9 @@ public class PhysicsScene
                     ResolveImpulse(body, otherBody, collision.Normal);
                     CorrectPosition(body, otherBody, collision);
                 }
+
+                //if(lastCollisions == null)
+                    lastCollisions = collisions;
             }
         }
     }

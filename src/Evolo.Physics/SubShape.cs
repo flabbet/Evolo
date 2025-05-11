@@ -193,18 +193,27 @@ public class SubShape
 
     public VecD? GetClosestPointOnPath(VecD point, float maxDistanceInPixels)
     {
+        double closestDistance = double.PositiveInfinity;
+        VecD? closestPoint = null;
+
         for (int i = 0; i < points.Count; i++)
         {
             var currentPoint = points[i];
 
             VecD? closest = VectorMath.GetClosestPointOnSegment(point, currentPoint.Verb);
+
             if (closest != null && VecD.Distance(closest.Value, point) < maxDistanceInPixels)
             {
-                return closest;
+                double distance = VecD.Distance(closest.Value, point);
+                if (distance < closestDistance)
+                {
+                    closestDistance = distance;
+                    closestPoint = closest;
+                }
             }
         }
 
-        return null;
+        return closestPoint;
     }
 
     public Verb? FindVerbContainingPoint(VecD point)
@@ -236,5 +245,27 @@ public class SubShape
             data[1] = points[0].Position;
             points.Add(new ShapePoint(points[0].Position, points[^1].Index + 1, new Verb((PathVerb.Line, data, 0))));
         }
+    }
+
+    public Verb? FindVerbIntersectingWith(VecD from, VecD to, out VecD? contactPoint, out VecD? normal)
+    {
+        contactPoint = null;
+        normal = null;
+
+        foreach (var shapePoint in points)
+        {
+            if (shapePoint.Verb.VerbType is PathVerb.Quad or PathVerb.Conic)
+            {
+                shapePoint.ConvertVerbToCubic();
+            }
+
+            contactPoint = shapePoint.Verb.TryFindIntersection(from, to, out normal);
+            if (contactPoint != null)
+            {
+                return shapePoint.Verb;
+            }
+        }
+
+        return null;
     }
 }

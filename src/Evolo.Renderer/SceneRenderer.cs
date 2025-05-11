@@ -37,7 +37,6 @@ public class SceneRenderer
         Scene = scene;
         debugFont = Font.CreateDefault();
         debugFont.Size = 16;
-
     }
 
     public void Render(Texture renderTexture, double deltaTime)
@@ -67,6 +66,7 @@ public class SceneRenderer
         }
 
         DrawInSceneDebugText(renderContext);
+        DrawCollisionData(renderContext);
         DrawInSceneDebug?.Invoke(renderContext);
 
         renderTexture.DrawingSurface.Canvas.RestoreToCount(savedWidth);
@@ -79,10 +79,7 @@ public class SceneRenderer
         paint.Style = PaintStyle.Stroke;
         paint.StrokeWidth = 2;
 
-        using var path = physicsBody.Collider.WorldPath;
-        path.Offset(new VecD(0, -physicsBody.Collider.AABB.Center.Y * 2));
-
-        renderContext.DrawPath(path, paint);
+        renderContext.DrawPath(physicsBody.Collider.WorldPath, paint);
         paint.Color = Colors.Red;
         renderContext.DrawCircle(physicsBody.Position, 0.2, paint);
     }
@@ -145,6 +142,29 @@ public class SceneRenderer
             VecD pos = new VecD(entity.Position.X, entity.Position.Y);
 
             //richText3.Paint(renderContext.DrawingSurface.Canvas, ToViewportPosition(pos) + new VecD(-richText3.MeasureBounds(debugFont).Width / 2f, -10), debugFont, paint, null);
+        }
+    }
+
+    private void DrawCollisionData(RenderContext renderContext)
+    {
+        CollisionData[] data = PhysicsScene.lastCollisions;
+        if (data != null)
+        {
+            using var paint = new Paint();
+            paint.Style = PaintStyle.Stroke;
+            paint.StrokeWidth = 2;
+
+            foreach (var collision in data)
+            {
+                paint.Color = Colors.Bisque;
+                renderContext.DrawPath(collision.IntersectionPath, paint);
+
+                paint.Color = Colors.Purple;
+                renderContext.DrawCircle(collision.CollisionPoint, 0.1, paint);
+                paint.Color = Colors.Aqua;
+                renderContext.DrawLine(collision.CollisionPoint,
+                    collision.CollisionPoint +  collision.Normal, paint);
+            }
         }
     }
 }
