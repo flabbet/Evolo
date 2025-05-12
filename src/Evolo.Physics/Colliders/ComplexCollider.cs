@@ -1,3 +1,4 @@
+using Drawie.Backend.Core.Numerics;
 using Drawie.Backend.Core.Vector;
 using Drawie.Numerics;
 
@@ -37,7 +38,7 @@ public class ComplexCollider : Collider<ComplexCollider>
         var path = new VectorPath();
         foreach (var collider in ConvexColliders)
         {
-            path = path.Op(collider.LocalPath, VectorPathOp.Union);
+            path.AddPath(collider.LocalPath, AddPathMode.Append);
         }
 
         return path;

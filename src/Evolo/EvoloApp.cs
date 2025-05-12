@@ -21,7 +21,6 @@ public class EvoloApp : DrawieApp
 {
     private IWindow window;
     private SceneRenderer sceneRenderer;
-    private ICollider testingCollider;
 
     public double TimeScale { get; set; } = 1;
 
@@ -40,7 +39,8 @@ public class EvoloApp : DrawieApp
 
         List<ConvexCollider> colliders = new List<ConvexCollider>();
 
-        colliders.Add(new RectangleCollider(VecD.Zero, new VecD(3, 1), 0));
+        colliders.Add(new RectangleCollider(VecD.Zero, new VecD(3, 1), 45));
+        colliders.Add(new CircleCollider(new VecD(0, -0.5), 1));
 
         PolyObject polyObject = new PolyObject(colliders);
 
@@ -56,13 +56,10 @@ public class EvoloApp : DrawieApp
             ViewportPosition = window.Size / 2f
         };
 
-        testingCollider = new RectangleCollider(VecD.Zero, new VecD(5, 1), 45);
-
-        //scene.AddEntity(polyObject);
-        //scene.AddEntity(polyObject2);
+        scene.AddEntity(polyObject);
+        scene.AddEntity(polyObject2);
 
         sceneRenderer.DebugDraw += SceneRendererOnDebugDraw;
-        sceneRenderer.DrawInSceneDebug += SceneRendererOnDrawInSceneDebug;
         window.Render += WindowOnRender;
         window.Update += WindowOnUpdate;
 
@@ -72,28 +69,6 @@ public class EvoloApp : DrawieApp
         }
 
         scene.Run();
-    }
-
-    private void SceneRendererOnDrawInSceneDebug(RenderContext renderContext)
-    {
-        if (testingCollider != null)
-        {
-            using var paint2 = new Paint();
-            paint2.Color = Colors.Red;
-            paint2.Style = PaintStyle.Stroke;
-            paint2.StrokeWidth = 2;
-
-            VectorPath path = new VectorPath(testingCollider.WorldPath);
-            path.Offset(new VecD(0, -testingCollider.AABB.Center.Y * 2));
-            renderContext.DrawPath(path, paint2);
-
-            VecD closestPoint =
-                testingCollider.GetClosestPointTo(ViewportToWorld(window.InputController.PrimaryPointer.Position));
-            paint2.Color = Colors.Blue;
-            paint2.Style = PaintStyle.Fill;
-
-            renderContext.DrawCircle(closestPoint, 0.2, paint2);
-        }
     }
 
     private void WindowOnUpdate(double deltaTime)
@@ -132,12 +107,12 @@ public class EvoloApp : DrawieApp
         double scale = 0;
         if (window.InputController.PrimaryKeyboard.IsKeyPressed(Key.Q))
         {
-            scale += 0.1;
+            scale += 0.025;
         }
 
         if (window.InputController.PrimaryKeyboard.IsKeyPressed(Key.E))
         {
-            scale += -0.1;
+            scale += -0.025;
         }
 
 
@@ -149,18 +124,21 @@ public class EvoloApp : DrawieApp
 
     private void SceneRendererOnDebugDraw(Canvas canvas)
     {
-        string pointerPosition = $"Pointer Position: {window.InputController.PrimaryPointer.Position}";
-        var worldPosition = ViewportToWorld(window.InputController.PrimaryPointer.Position);
-        string worldPointerPosition = $"World Pointer Position: x: {worldPosition.X:F2} y: {worldPosition.Y:F2}";
+        if (window.InputController.PrimaryPointer != null)
+        {
+            string pointerPosition = $"Pointer Position: {window.InputController.PrimaryPointer.Position}";
+            var worldPosition = ViewportToWorld(window.InputController.PrimaryPointer.Position);
+            string worldPointerPosition = $"World Pointer Position: x: {worldPosition.X:F2} y: {worldPosition.Y:F2}";
 
-        RichText debugText = new RichText(pointerPosition + "\n" + worldPointerPosition);
-        var font = Font.CreateDefault();
-        font.Size = 16;
+            RichText debugText = new RichText(pointerPosition + "\n" + worldPointerPosition);
+            var font = Font.CreateDefault();
+            font.Size = 16;
 
-        debugText.Fill = true;
-        debugText.FillPaintable = new ColorPaintable(Colors.White);
-        using var paint = new Paint();
-        debugText.Paint(canvas, new VecD(0, 0), font, paint, null);
+            debugText.Fill = true;
+            debugText.FillPaintable = new ColorPaintable(Colors.White);
+            using var paint = new Paint();
+            debugText.Paint(canvas, new VecD(0, 0), font, paint, null);
+        }
     }
 
     private void PrimaryPointerOnPointerClicked(IPointer pointer, PointerButton button, VecD position)

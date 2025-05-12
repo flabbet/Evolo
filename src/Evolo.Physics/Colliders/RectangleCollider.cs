@@ -9,6 +9,7 @@ public class RectangleCollider : ConvexCollider
     public double RotationAngle { get; set; }
     public override VectorPath LocalPath { get; }
     public RectD Rectangle { get; set; }
+    public VecD WorldCenter => PhysicsBody?.Position ?? VecD.Zero + Rectangle.Center;
 
     public RectangleCollider(VecD position, VecD size, double rotation = 0)
     {
@@ -31,7 +32,8 @@ public class RectangleCollider : ConvexCollider
 
     public override VecD GetClosestPointTo(VecD point)
     {
-        VecD unrotatedPoint = point.Rotate(double.DegreesToRadians(RotationAngle), Rectangle.Center);
+        VecD localPoint = point - WorldCenter;
+        VecD unrotatedPoint = localPoint.Rotate(double.DegreesToRadians(RotationAngle), Rectangle.Center);
 
         if (unrotatedPoint.X < Rectangle.Left)
             unrotatedPoint.X = Rectangle.Left;
@@ -43,7 +45,7 @@ public class RectangleCollider : ConvexCollider
         else if (unrotatedPoint.Y > Rectangle.Bottom)
             unrotatedPoint.Y = Rectangle.Bottom;
 
-        return unrotatedPoint.Rotate(-double.DegreesToRadians(RotationAngle), Rectangle.Center);
+        return unrotatedPoint.Rotate(-double.DegreesToRadians(RotationAngle), Rectangle.Center) + WorldCenter;
     }
 
     public override VecD GetCollisionCentroid(VecD intersectionCenter)

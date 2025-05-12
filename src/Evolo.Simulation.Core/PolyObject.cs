@@ -9,7 +9,6 @@ public class PolyObject : PhysicsObject, ISimulableEntity
     public PolyObject(List<ConvexCollider> colliders)
     {
         Collider = new ComplexCollider(colliders);
-        Position = new VecD(0, 0);
 
         foreach (var collider in colliders)
         {

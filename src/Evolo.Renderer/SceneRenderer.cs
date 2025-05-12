@@ -1,6 +1,7 @@
 ﻿using Drawie.Backend.Core;
 using Drawie.Backend.Core.ColorsImpl;
 using Drawie.Backend.Core.ColorsImpl.Paintables;
+using Drawie.Backend.Core.Numerics;
 using Drawie.Backend.Core.Surfaces;
 using Drawie.Backend.Core.Surfaces.PaintImpl;
 using Drawie.Backend.Core.Text;
@@ -79,7 +80,26 @@ public class SceneRenderer
         paint.Style = PaintStyle.Stroke;
         paint.StrokeWidth = 2;
 
-        renderContext.DrawPath(physicsBody.Collider.WorldPath, paint);
+        if (physicsBody.Collider is ComplexCollider complexCollider)
+        {
+            VectorPath path = new VectorPath();
+            foreach (var convex in complexCollider.ConvexColliders)
+            {
+                using var yInvertedWorldPath = new VectorPath();
+                yInvertedWorldPath.AddPath(convex.WorldPath, Matrix3X3.CreateScale(1, -1, (float)physicsBody.Collider.WorldPath.Bounds.Center.X,
+                    (float)physicsBody.Collider.WorldPath.Bounds.Center.Y), AddPathMode.Append);
+                var opped = path.Op(yInvertedWorldPath, VectorPathOp.Union);
+                path.Dispose();
+                path = opped;
+            }
+
+            renderContext.DrawPath(path, paint);
+        }
+        else
+        {
+            renderContext.DrawPath(physicsBody.Collider.WorldPath, paint);
+        }
+
         paint.Color = Colors.Red;
         renderContext.DrawCircle(physicsBody.Position, 0.2, paint);
     }
