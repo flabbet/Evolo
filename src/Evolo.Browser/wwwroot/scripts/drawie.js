@@ -15,7 +15,7 @@
 
     uniformLocationHandleIds = 0;
     uniformLocationHandles = {};
-    
+
     exports = {};
 
     addDrawieImports() {
@@ -203,6 +203,18 @@
                 innerHeight: () => window.innerHeight,
                 requestAnimationFrame: () => this.invokeRequestAnimationFrame(),
                 subscribeWindowResize: () => window.addEventListener('resize', this.invokeWindowResize)
+            },
+            input: {
+                subscribeKeyDown: () => {
+                    document.addEventListener('keydown', (event) => {
+                        this.exports.Drawie.JSInterop.JSRuntime.OnKeyDown(event.key);
+                    });
+                },
+                subscribeKeyUp: () => {
+                    document.addEventListener('keyup', (event) => {
+                        this.exports.Drawie.JSInterop.JSRuntime.OnKeyUp(event.key);
+                    });
+                },
             }
         });
     }
@@ -219,11 +231,12 @@
     }
 
     invokeWindowResize() {
-        if(this.exports) {
+        if (this.exports) {
             this.exports.Drawie.JSInterop.JSRuntime.WindowResized(window.innerWidth, window.innerHeight);
         }
     }
 
     async addDrawieExports() {
         this.exports = await globalThis.getDotnetRuntime(0).getAssemblyExports("Drawie.JSInterop");
-    }}
+    }
+}
